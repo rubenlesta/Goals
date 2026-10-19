@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f7f4" />
+    <meta name="description" content="Un espacio tranquilo para avanzar hacia tus metas, un reto a la vez." />
+    <title>Rumbo — tus retos, a tu ritmo</title>
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar"><a class="brand" href="#">rumbo<span>.</span></a><span class="header-note">UN PASO CADA DÍA</span></header>
+      <section class="intro">
+        <p class="eyebrow">TU ESPACIO PERSONAL</p>
+        <h1>Lo que quieres<br /><span>lograr.</span></h1>
+        <p class="intro-copy">Cada gran cambio empieza con un pequeño paso.</p>
+        <div class="progress-summary"><div><span id="progressLabel">Tu camino, a tu ritmo</span><span id="progressNumbers">0 de 0</span></div><div class="progress-track"><span id="overallProgress"></span></div></div>
+      </section>
+      <section class="goals-section">
+        <div class="section-heading"><div><p class="section-kicker" id="listKicker">EN MARCHA</p><h2 id="listTitle">Mis retos <span id="activeCount">0</span></h2></div><button class="text-button" id="showHistory" type="button">Conseguidos ↗</button></div>
+        <div class="filter-row" aria-label="Filtrar por categoría">
+          <button class="filter-chip is-selected" data-filter="all" type="button">Todos</button>
+          <button class="filter-chip" data-filter="gold" type="button">🥇 Oro</button>
+          <button class="filter-chip" data-filter="silver" type="button">🥈 Plata</button>
+          <button class="filter-chip" data-filter="bronze" type="button">🥉 Bronce</button>
+          <button class="filter-chip" data-filter="habit" type="button">⚡ Hábitos</button>
+        </div>
+        <div id="goalList" class="goal-list" aria-live="polite"></div>
+        <div id="emptyState" class="empty-state" hidden><h3 id="emptyTitle">Todo empieza con una idea.</h3><p id="emptyCopy">Añade tu primer reto y empieza a darle forma.</p><button id="emptyAdd" class="text-button" type="button">Crear un reto ↗</button></div>
+      </section>
+    </main>
+    <button class="add-button" id="addGoal" type="button">＋ <span>Nuevo reto</span></button>
+    <dialog class="goal-dialog" id="goalDialog">
+      <form id="goalForm">
+        <header class="dialog-heading"><div><p class="section-kicker">UN PASO MÁS</p><h2 id="dialogTitle">Nuevo reto</h2></div><button class="close-button" id="closeDialog" type="button" aria-label="Cerrar">×</button></header>
+        <label for="goalTitle">¿Qué quieres lograr?</label>
+        <input id="goalTitle" name="title" maxlength="80" placeholder="Ej. Correr mi primera media maratón" required />
+        <fieldset><legend>Elige una categoría</legend>
+          <label><input type="radio" name="category" value="gold" /> 🥇 Oro</label>
+          <label><input type="radio" name="category" value="silver" /> 🥈 Plata</label>
+          <label><input type="radio" name="category" value="bronze" checked /> 🥉 Bronce</label>
+          <label><input type="radio" name="category" value="habit" /> ⚡ Hábito</label>
+        </fieldset>
+        <label for="targetDate">Fecha objetivo</label><input id="targetDate" name="targetDate" type="date" />
+        <label for="bestRecord">Récord actual</label><input id="bestRecord" name="bestRecord" maxlength="80" placeholder="Ej. 10 km completados" />
+        <label for="goalNotes">Notas e ideas</label><textarea id="goalNotes" name="notes" rows="3"></textarea>
+        <footer><button class="delete-button" id="deleteGoal" type="button" hidden>Eliminar reto</button><button class="primary-button" type="submit">Guardar reto ↗</button></footer>
+      </form>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
