@@ -1,3 +1,4 @@
+import { celebrate } from "./celebration.js";
 import { categories, loadGoals, saveGoals } from "./goals-store.js";
 
 const list = document.querySelector("#goalList");
@@ -118,9 +119,17 @@ list.addEventListener("click", (event) => {
   const goal = goals.find((value) => value.id === item?.dataset.id);
   if (!goal) return;
   if (event.target.matches(".complete-toggle")) {
-    if (!persist(goals.map((value) => value.id === goal.id ? { ...value, completed: true } : value))) return;
-    render();
-    toast("¡Reto conseguido!");
+    const completedAt = new Date().toISOString();
+    if (!persist(goals.map((value) => value.id === goal.id ? { ...value, completed: true, completedAt } : value))) return;
+    event.target.checked = true;
+    event.target.disabled = true;
+    celebrate().then(() => {
+      item.classList.add("is-completing");
+      setTimeout(() => {
+        render();
+        toast("¡Reto conseguido! Un paso más en tu camino.");
+      }, 380);
+    });
     return;
   }
   if (event.target.closest(".more-button") || event.target.closest(".goal-main")) openEditor(goal);
@@ -145,3 +154,10 @@ document.querySelectorAll(".filter-chip").forEach((button) => button.addEventLis
 
 render();
 if (loaded.error) toast(loaded.error);
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((error) => {
+      console.error("No se pudo activar el modo sin conexión.", error);
+    });
+  });
+}
