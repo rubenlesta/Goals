@@ -11,47 +11,187 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="app-shell">
-      <header class="topbar"><a class="brand" href="#">rumbo<span>.</span></a><span class="header-note">UN PASO CADA DÍA</span></header>
-      <section class="intro">
-        <p class="eyebrow">TU ESPACIO PERSONAL</p>
-        <h1>Lo que quieres<br /><span>lograr.</span></h1>
-        <p class="intro-copy">Cada gran cambio empieza con un pequeño paso.</p>
-        <div class="progress-summary"><div><span id="progressLabel">Tu camino, a tu ritmo</span><span id="progressNumbers">0 de 0</span></div><div class="progress-track"><span id="overallProgress"></span></div></div>
-      </section>
-      <section class="goals-section">
-        <div class="section-heading"><div><p class="section-kicker" id="listKicker">EN MARCHA</p><h2 id="listTitle">Mis retos <span id="activeCount">0</span></h2></div><button class="text-button" id="showHistory" type="button">Conseguidos ↗</button></div>
-        <div class="filter-row" aria-label="Filtrar por categoría">
-          <button class="filter-chip is-selected" data-filter="all" type="button">Todos</button>
-          <button class="filter-chip" data-filter="gold" type="button">🥇 Oro</button>
-          <button class="filter-chip" data-filter="silver" type="button">🥈 Plata</button>
-          <button class="filter-chip" data-filter="bronze" type="button">🥉 Bronce</button>
-          <button class="filter-chip" data-filter="habit" type="button">⚡ Hábitos</button>
-        </div>
-        <div id="goalList" class="goal-list" aria-live="polite"></div>
-        <div id="emptyState" class="empty-state" hidden><h3 id="emptyTitle">Todo empieza con una idea.</h3><p id="emptyCopy">Añade tu primer reto y empieza a darle forma.</p><button id="emptyAdd" class="text-button" type="button">Crear un reto ↗</button></div>
-      </section>
-    </main>
-    <button class="add-button" id="addGoal" type="button">＋ <span>Nuevo reto</span></button>
-    <dialog class="goal-dialog" id="goalDialog">
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Rumbo, inicio">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span>rumbo<span class="brand-period">.</span></span>
+        </a>
+        <button class="icon-button history-shortcut" id="historyShortcut" type="button" aria-label="Ver historial de logros">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.49-6.01L3.5 8.5M3.5 4.5v4h4M12 7v5l3.25 2"/></svg>
+          <span id="headerDoneCount">0</span>
+        </button>
+      </header>
+
+      <main>
+        <section class="screen-view" id="challengesView" aria-label="Retos">
+        <section class="intro" aria-labelledby="pageTitle">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> TU ESPACIO PERSONAL</p>
+          <h1 id="pageTitle">Lo que quieres<br /><span>lograr.</span></h1>
+          <p class="intro-copy">Cada gran cambio empieza con un pequeño paso.</p>
+          <div class="progress-summary" aria-label="Resumen de progreso">
+            <div class="progress-copy"><span id="progressLabel">Tu camino, a tu ritmo</span><span id="progressNumbers">0 de 0</span></div>
+            <div class="progress-track"><span id="overallProgress"></span></div>
+          </div>
+        </section>
+
+        <section class="goals-section" aria-label="Tus retos">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">EN MARCHA</p>
+              <h2>Mis retos <span id="activeCount" class="count-badge">0</span></h2>
+            </div>
+            <button class="text-button" id="showHistory" type="button">Conseguidos <span aria-hidden="true">↗</span></button>
+          </div>
+          <div class="filter-row" role="tablist" aria-label="Filtrar retos por categoría">
+            <button class="filter-chip is-selected" type="button" role="tab" aria-selected="true" data-filter="all">Todos</button>
+            <button class="filter-chip" type="button" role="tab" aria-selected="false" data-filter="gold"><span class="filter-dot gold-dot"></span>Oro</button>
+            <button class="filter-chip" type="button" role="tab" aria-selected="false" data-filter="silver"><span class="filter-dot silver-dot"></span>Plata</button>
+            <button class="filter-chip" type="button" role="tab" aria-selected="false" data-filter="bronze"><span class="filter-dot bronze-dot"></span>Bronce</button>
+            <button class="filter-chip" type="button" role="tab" aria-selected="false" data-filter="habit"><span class="filter-dot habit-dot"></span>Hábitos</button>
+          </div>
+          <div id="goalList" class="goal-list" aria-live="polite"></div>
+          <div id="emptyState" class="empty-state" hidden>
+            <div class="empty-mark" aria-hidden="true">✳</div>
+            <h3 id="emptyTitle">Todo empieza con una idea.</h3>
+            <p id="emptyCopy">Añade tu primer reto y empieza a darle forma.</p>
+            <button class="text-button empty-action" id="emptyAdd" type="button">Crear un reto <span aria-hidden="true">↗</span></button>
+          </div>
+        </section>
+        </section>
+
+        <section class="screen-view showcase-view" id="showcaseView" aria-labelledby="showcaseTitle" hidden>
+          <section class="intro showcase-intro">
+            <p class="eyebrow"><span class="eyebrow-dot gold-eyebrow"></span> TU CAMINO, CELEBRADO</p>
+            <h1 id="showcaseTitle">Todo lo que has<br /><span class="gold-title">conseguido.</span></h1>
+            <p class="intro-copy">Los momentos que merecen quedarse contigo.</p>
+          </section>
+
+          <section class="showcase-section" aria-labelledby="featuredTitle">
+            <div class="section-heading">
+              <div><p class="section-kicker">TUS MAYORES HITOS</p><h2 id="featuredTitle">Vitrina de Honor <span class="trophy-mark" aria-hidden="true">✦</span></h2></div>
+              <span class="featured-limit" id="featuredCount">0 / 3</span>
+            </div>
+            <div class="featured-grid" id="featuredGrid"></div>
+          </section>
+
+          <section class="showcase-section gold-archive" aria-labelledby="goldArchiveTitle">
+            <div class="section-heading">
+              <div><p class="section-kicker">HITOS DE LARGO PLAZO</p><h2 id="goldArchiveTitle">Archivo Oro <span class="count-badge" id="goldCount">0</span></h2></div>
+            </div>
+            <div class="gallery-controls">
+              <label class="select-control"><span>Ordenar</span><select id="goldSort"><option value="newest">Más recientes</option><option value="oldest">Más antiguos</option><option value="theme">Tema A–Z</option></select></label>
+              <label class="select-control"><span>Tema</span><select id="goldTheme"><option value="all">Todos</option></select></label>
+            </div>
+            <div class="gallery-grid" id="goldGallery"></div>
+            <div class="empty-state gallery-empty" id="goldEmpty" hidden>
+              <div class="empty-mark" aria-hidden="true">✦</div>
+              <h3 id="goldEmptyTitle">Aún no hay hitos Oro.</h3>
+              <p id="goldEmptyCopy">Cuando alcances una meta de largo plazo, su recuerdo vivirá aquí.</p>
+            </div>
+          </section>
+        </section>
+
+        <section class="screen-view history-screen" id="historyView" aria-labelledby="historyTitle" hidden>
+          <section class="intro">
+            <p class="eyebrow"><span class="eyebrow-dot"></span> TU RECORRIDO</p>
+            <h1 id="historyTitle">Cada paso<br /><span>cuenta.</span></h1>
+            <p class="intro-copy">Todos los retos que ya forman parte de tu historia.</p>
+          </section>
+          <section class="goals-section" aria-label="Historial de retos conseguidos">
+            <div class="section-heading"><div><p class="section-kicker">LO HAS HECHO</p><h2>Historial <span id="historyCount" class="count-badge">0</span></h2></div></div>
+            <div id="historyList" class="goal-list history-view" aria-live="polite"></div>
+            <div id="historyEmpty" class="empty-state" hidden><div class="empty-mark" aria-hidden="true">✳</div><h3>Tus logros aparecerán aquí.</h3><p>Completa un reto y vuelve para revivir el momento.</p></div>
+          </section>
+        </section>
+      </main>
+
+      <footer class="footer-note"><span>Un paso cada día.</span><span class="footer-sparkle">✳</span></footer>
+    </div>
+
+    <button class="add-button" id="addGoal" type="button" aria-label="Añadir un reto">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      <span>Nuevo reto</span>
+    </button>
+
+    <nav class="bottom-nav" aria-label="Navegación principal">
+      <button class="nav-item is-active" type="button" data-screen="challenges" aria-current="page"><span class="nav-icon" aria-hidden="true">🎯</span><span>Retos</span></button>
+      <button class="nav-item" type="button" data-screen="showcase"><span class="nav-icon" aria-hidden="true">🏆</span><span>Vitrina</span></button>
+      <button class="nav-item" type="button" data-screen="history"><span class="nav-icon" aria-hidden="true">📜</span><span>Historial</span></button>
+    </nav>
+
+    <dialog class="goal-dialog" id="goalDialog" aria-labelledby="dialogTitle">
       <form id="goalForm">
-        <header class="dialog-heading"><div><p class="section-kicker">UN PASO MÁS</p><h2 id="dialogTitle">Nuevo reto</h2></div><button class="close-button" id="closeDialog" type="button" aria-label="Cerrar">×</button></header>
-        <label for="goalTitle">¿Qué quieres lograr?</label>
-        <input id="goalTitle" name="title" maxlength="80" placeholder="Ej. Correr mi primera media maratón" required />
-        <fieldset><legend>Elige una categoría</legend>
-          <label><input type="radio" name="category" value="gold" /> 🥇 Oro</label>
-          <label><input type="radio" name="category" value="silver" /> 🥈 Plata</label>
-          <label><input type="radio" name="category" value="bronze" checked /> 🥉 Bronce</label>
-          <label><input type="radio" name="category" value="habit" /> ⚡ Hábito</label>
+        <div class="dialog-top">
+          <div><p class="section-kicker">UN PASO MÁS</p><h2 id="dialogTitle">Nuevo reto</h2></div>
+          <button class="icon-button close-button" id="closeDialog" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <label class="field-label" for="goalTitle">¿Qué quieres lograr?<span class="required-mark">*</span></label>
+        <input class="text-input" id="goalTitle" name="title" maxlength="80" placeholder="Ej. Correr mi primera media maratón" required />
+        <fieldset class="category-field">
+          <legend class="field-label">Elige una categoría</legend>
+          <div class="category-options">
+            <label class="category-option category-gold"><input type="radio" name="category" value="gold" /><span class="category-emoji">🥇</span><span>Oro</span><small>Largo plazo</small></label>
+            <label class="category-option category-silver"><input type="radio" name="category" value="silver" /><span class="category-emoji">🥈</span><span>Plata</span><small>Medio plazo</small></label>
+            <label class="category-option category-bronze"><input type="radio" name="category" value="bronze" /><span class="category-emoji">🥉</span><span>Bronce</span><small>Corto plazo</small></label>
+            <label class="category-option category-habit"><input type="radio" name="category" value="habit" /><span class="category-emoji">⚡</span><span>Hábito</span><small>Rutina</small></label>
+          </div>
         </fieldset>
-        <label for="targetDate">Fecha objetivo</label><input id="targetDate" name="targetDate" type="date" />
-        <label for="bestRecord">Récord actual</label><input id="bestRecord" name="bestRecord" maxlength="80" placeholder="Ej. 10 km completados" />
-        <label for="goalNotes">Notas e ideas</label><textarea id="goalNotes" name="notes" rows="3"></textarea>
-        <footer><button class="delete-button" id="deleteGoal" type="button" hidden>Eliminar reto</button><button class="primary-button" type="submit">Guardar reto ↗</button></footer>
+        <div class="field-grid">
+          <div><label class="field-label" for="targetDate">Fecha objetivo <span class="optional-mark">opcional</span></label><input class="text-input" id="targetDate" name="targetDate" type="date" /></div>
+          <div><label class="field-label" for="bestRecord">Récord actual <span class="optional-mark">opcional</span></label><input class="text-input" id="bestRecord" name="bestRecord" maxlength="80" placeholder="Ej. 10 km completados" /></div>
+        </div>
+        <label class="field-label" for="goalNotes">Notas e ideas <span class="optional-mark">opcional</span></label>
+        <textarea class="text-input notes-input" id="goalNotes" name="notes" rows="3" maxlength="1000" placeholder="Estrategias, avances, lo que te motive…"></textarea>
+        <label class="field-label" for="goalTags">Temas o etiquetas <span class="optional-mark">opcional · separadas por comas</span></label>
+        <input class="text-input" id="goalTags" name="tags" maxlength="120" placeholder="Ej. deporte, aprendizaje, bienestar" />
+        <div class="form-footer">
+          <button class="delete-button" id="deleteGoal" type="button" hidden>Eliminar reto</button>
+          <button class="primary-button" type="submit">Guardar reto <span aria-hidden="true">↗</span></button>
+        </div>
       </form>
     </dialog>
+
+    <dialog class="goal-dialog memory-dialog" id="memoryDialog" aria-labelledby="memoryTitle">
+      <div class="dialog-top">
+        <div><p class="section-kicker">UN MOMENTO PARA RECORDAR</p><h2 id="memoryTitle">Tu logro</h2></div>
+        <button class="icon-button close-button" id="closeMemory" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <div id="memoryBadges" class="memory-badges"></div>
+      <p class="memory-date" id="memoryDate"></p>
+      <div class="memory-record-block"><span>Récord final</span><strong id="memoryRecord">—</strong></div>
+      <div class="memory-log-section"><h3>Notas del camino</h3><div id="memoryNotes" class="memory-log"></div></div>
+      <div class="memory-log-section"><h3>Récords anteriores</h3><div id="memoryRecords" class="memory-log"></div></div>
+      <label class="field-label" for="finalReflection">Reflexión final</label>
+      <textarea class="text-input notes-input" id="finalReflection" rows="3" maxlength="1000" placeholder="¿Cómo se sintió lograrlo?"></textarea>
+      <div class="memory-actions">
+        <button class="pin-action" id="memoryPin" type="button">☆ Añadir a la Vitrina</button>
+        <button class="primary-button" id="saveReflection" type="button">Guardar reflexión</button>
+      </div>
+      <div class="share-actions">
+        <button class="text-button" id="memoryShare" type="button">Compartir logro <span aria-hidden="true">↗</span></button>
+        <button class="text-button" id="memoryDownload" type="button">Descargar tarjeta <span aria-hidden="true">↓</span></button>
+      </div>
+    </dialog>
+
+    <dialog class="goal-dialog celebration-dialog" id="celebrationDialog" aria-labelledby="celebrationTitle">
+      <div class="celebration-symbol" aria-hidden="true">✦</div>
+      <p class="section-kicker">UN HITO PARA RECORDAR</p>
+      <h2 id="celebrationTitle">Lo has conseguido.</h2>
+      <p class="celebration-goal" id="celebrationGoal"></p>
+      <p class="celebration-question">¿Quieres exponer este logro en tu Vitrina de Honor?</p>
+      <div class="celebration-buttons">
+        <button class="primary-button" id="featureAchievement" type="button">Sí, exponerlo <span aria-hidden="true">✦</span></button>
+        <button class="secondary-button" id="skipFeature" type="button">Ahora no</button>
+      </div>
+      <div class="share-actions">
+        <button class="text-button" id="celebrationShare" type="button">Compartir logro <span aria-hidden="true">↗</span></button>
+        <button class="text-button" id="celebrationDownload" type="button">Descargar tarjeta <span aria-hidden="true">↓</span></button>
+      </div>
+    </dialog>
+
     <canvas id="celebrationCanvas" class="celebration-canvas" aria-hidden="true"></canvas>
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script type="module" src="./app.js"></script>
   </body>
 </html>
