@@ -1,1 +1,25 @@
-# Goals
+# Rumbo
+
+PWA mobile-first para crear, seguir y celebrar retos personales. No necesita backend ni dependencias de instalación: los retos se guardan en el almacenamiento local del navegador.
+
+## Probar en local
+
+Desde esta carpeta, inicia un servidor HTTP:
+
+```sh
+python3 -m http.server 8000
+```
+
+Abre `http://localhost:8000`. Un servidor HTTP es necesario para que el navegador pueda activar el service worker y las funciones de instalación/offline de la PWA.
+
+## Incluye
+
+- Retos de ejemplo al primer inicio y persistencia en `localStorage`.
+- Filtros por categoría y navegación entre retos, vitrina e historial.
+- Alta, edición y eliminación de retos, con fecha objetivo, récord y notas.
+- Celebración con confeti al completar; los hitos Oro abren una invitación para fijarlos en la Vitrina de Honor.
+- Vitrina con tres espacios destacados, archivo Oro por fecha/tema, recuerdos con notas y récords previos, reflexión final y tarjetas PNG para compartir.
+- Historial separado para los retos completados de Plata, Bronce y Hábitos.
+- Persistencia de fecha de consecución, etiquetas, estado fijado y reflexión final en `localStorage`.
+- Manifiesto, icono y caché offline de los recursos principales.
+- Código separado por responsabilidades: interfaz (`app.js`), datos (`goals-store.js`) y confeti (`celebration.js`).
