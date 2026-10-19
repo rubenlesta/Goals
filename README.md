@@ -12,6 +12,10 @@ python3 -m http.server 8000
 
 Abre `http://localhost:8000`. Un servidor HTTP es necesario para que el navegador pueda activar el service worker y las funciones de instalación/offline de la PWA.
 
+## Instalar en el móvil
+
+Consulta la [guía paso a paso para probar e instalar Rumbo en tu móvil](./To_install.md), con instrucciones para la red Wi‑Fi local, publicación HTTPS e instalación en iOS y Android.
+
 ## Incluye
 
 - Retos de ejemplo al primer inicio y persistencia en `localStorage`.
