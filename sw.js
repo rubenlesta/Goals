@@ -1,5 +1,5 @@
-const CACHE_NAME = "rumbo-static-v5";
-const APP_FILES = ["./", "./index.html", "./styles.css", "./app.js", "./goals-store.js", "./celebration.js", "./manifest.json", "./icon.svg"];
+const CACHE_NAME = "rumbo-static-v6";
+const APP_FILES = ["./", "./index.html", "./styles.css", "./app.js", "./goals-store.js", "./celebration.js", "./lockscreen.js", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_FILES)));

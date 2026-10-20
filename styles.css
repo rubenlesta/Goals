@@ -146,6 +146,41 @@ h1 span { color: var(--green); }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 
+.app-root { min-height: 100svh; }
+html.is-locked { overflow: hidden; }
+html.is-locked #appRoot { display: none !important; }
+html:not(.is-locked) #lockscreen { display: none !important; }
+.lockscreen { position: fixed; z-index: 20; inset: 0; display: flex; justify-content: center; overflow-y: auto; padding: max(26px, env(safe-area-inset-top)) 22px max(18px, env(safe-area-inset-bottom)); background: var(--paper); transition: opacity .2s ease, transform .2s ease; }
+.lock-content { display: flex; width: min(100%, 350px); min-height: calc(100svh - max(26px, env(safe-area-inset-top)) - max(18px, env(safe-area-inset-bottom))); flex-direction: column; margin: 0 auto; }
+.lock-brand { align-self: flex-start; }
+.lock-message { margin-top: clamp(38px, 8vh, 76px); }
+.lock-symbol { display: grid; width: 40px; height: 40px; place-items: center; margin-bottom: 23px; border: 1px solid #e5e8e1; border-radius: 13px; background: #edf0ea; color: var(--green); font-size: 20px; }
+.lock-message .eyebrow { margin-bottom: 13px; }
+.lock-message h1 { margin-bottom: 9px; font-size: clamp(38px, 10vw, 48px); letter-spacing: -2.8px; }
+.lock-copy { margin: 0; color: var(--muted); font-size: 12px; }
+.pin-indicators { display: flex; justify-content: center; gap: 18px; margin: 28px auto 8px; }
+.pin-indicator { width: 12px; height: 12px; border: 1.5px solid #c9ccc3; border-radius: 50%; background: transparent; transition: background .15s, border-color .15s, transform .15s; }
+.pin-indicator.is-filled { transform: scale(1.05); border-color: var(--green); background: var(--green); }
+.lock-error { min-height: 18px; margin: 4px 0 8px; color: #a75d51; text-align: center; font-size: 10px; }
+.pin-keypad { display: grid; width: min(100%, 286px); grid-template-columns: repeat(3, 1fr); gap: 9px 14px; align-self: center; }
+.pin-key { display: grid; min-height: 58px; place-items: center; border: 1px solid #e9e9e4; border-radius: 13px; background: #fff; box-shadow: 0 2px 5px #34383008; color: #30332e; font: 500 21px var(--display); -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: transform .12s, border-color .12s, background .12s; }
+.pin-key:active { transform: scale(.96); border-color: #d4dbd1; background: #f0f2ed; }
+.backspace-key svg { width: 22px; height: 22px; fill: none; stroke: #71736b; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.keypad-spacer { min-height: 58px; }
+.lock-footnote { margin: auto 0 0; padding-top: 18px; color: #a0a199; text-align: center; font-size: 9px; letter-spacing: .15px; }
+.lockscreen.has-error .pin-indicator { border-color: #c98c7e; }
+.lockscreen.has-error .pin-indicator.is-filled { background: #c98c7e; }
+.lockscreen.has-error .pin-indicators { animation: pin-shake .36s ease both; }
+.lockscreen.is-unlocking { opacity: 0; transform: scale(1.015); pointer-events: none; }
+@keyframes pin-shake { 15%, 55%, 95% { transform: translateX(-7px); } 35%, 75% { transform: translateX(7px); } }
+@media (max-height: 700px) {
+  .lock-message { margin-top: 28px; }
+  .lock-symbol { width: 34px; height: 34px; margin-bottom: 15px; }
+  .pin-indicators { margin-top: 18px; }
+  .pin-keypad { gap: 6px 12px; }
+  .pin-key, .keypad-spacer { min-height: 50px; }
+}
+
 .app-shell { padding-bottom: 178px; }
 .screen-view:not([hidden]) { animation: screen-in .28s ease both; }
 @keyframes screen-in { from { opacity: .65; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }

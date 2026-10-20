@@ -12,8 +12,7 @@ const celebrationDialog = document.querySelector("#celebrationDialog");
 const form = document.querySelector("#goalForm");
 const titleInput = document.querySelector("#goalTitle");
 const filterButtons = [...document.querySelectorAll(".filter-chip")];
-const loadedGoals = loadGoals();
-let goals = loadedGoals.goals;
+let goals = [];
 let activeFilter = "all";
 let activeScreen = "challenges";
 let editingId = null;
@@ -530,12 +529,14 @@ filterButtons.forEach((button) => button.addEventListener("click", () => {
 document.querySelector("#goldSort").addEventListener("change", renderShowcase);
 document.querySelector("#goldTheme").addEventListener("change", renderShowcase);
 
-render();
-if (loadedGoals.error) showToast(loadedGoals.error);
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-  window.addEventListener("load", () => {
+document.addEventListener("rumbo:unlocked", () => {
+  const loadedGoals = loadGoals();
+  goals = loadedGoals.goals;
+  render();
+  if (loadedGoals.error) showToast(loadedGoals.error);
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     navigator.serviceWorker.register("./sw.js").catch((error) => {
       console.error("No se pudo activar el modo sin conexión.", error);
     });
-  });
-}
+  }
+}, { once: true });

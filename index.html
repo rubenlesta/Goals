@@ -6,11 +6,48 @@
     <meta name="theme-color" content="#f7f7f4" />
     <meta name="description" content="Un espacio tranquilo para avanzar hacia tus metas, un reto a la vez." />
     <title>Rumbo — tus retos, a tu ritmo</title>
+    <script>document.documentElement.classList.add("is-locked");</script>
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="./manifest.json" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <section class="lockscreen" id="lockscreen" aria-labelledby="lockTitle">
+      <div class="lock-content">
+        <a class="brand lock-brand" href="#" aria-label="Rumbo">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span>rumbo<span class="brand-period">.</span></span>
+        </a>
+        <div class="lock-message">
+          <span class="lock-symbol" aria-hidden="true">✳</span>
+          <p class="eyebrow"><span class="eyebrow-dot"></span> TU ESPACIO PERSONAL</p>
+          <h1 id="lockTitle">Un momento<br /><span>para ti.</span></h1>
+          <p class="lock-copy">Introduce tu PIN para continuar.</p>
+        </div>
+        <div class="pin-indicators" id="pinIndicators" role="img" aria-label="PIN vacío: 0 de 4 dígitos">
+          <span class="pin-indicator"></span><span class="pin-indicator"></span><span class="pin-indicator"></span><span class="pin-indicator"></span>
+        </div>
+        <p class="lock-error" id="lockError" role="status" aria-live="polite"></p>
+        <div class="pin-keypad" aria-label="Teclado numérico">
+          <button class="pin-key" type="button" data-digit="1" aria-label="1">1</button>
+          <button class="pin-key" type="button" data-digit="2" aria-label="2">2</button>
+          <button class="pin-key" type="button" data-digit="3" aria-label="3">3</button>
+          <button class="pin-key" type="button" data-digit="4" aria-label="4">4</button>
+          <button class="pin-key" type="button" data-digit="5" aria-label="5">5</button>
+          <button class="pin-key" type="button" data-digit="6" aria-label="6">6</button>
+          <button class="pin-key" type="button" data-digit="7" aria-label="7">7</button>
+          <button class="pin-key" type="button" data-digit="8" aria-label="8">8</button>
+          <button class="pin-key" type="button" data-digit="9" aria-label="9">9</button>
+          <span class="keypad-spacer" aria-hidden="true"></span>
+          <button class="pin-key" type="button" data-digit="0" aria-label="0">0</button>
+          <button class="pin-key backspace-key" id="pinBackspace" type="button" aria-label="Borrar último dígito">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5H20a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7 6-7Z"/><path d="m12 9 6 6m0-6-6 6"/></svg>
+          </button>
+        </div>
+        <p class="lock-footnote">Tus metas, siempre a tu ritmo.</p>
+      </div>
+    </section>
+    <div class="app-root" id="appRoot" inert aria-hidden="true">
     <div class="app-shell">
       <header class="topbar">
         <a class="brand" href="#" aria-label="Rumbo, inicio">
@@ -27,7 +64,7 @@
         <section class="screen-view" id="challengesView" aria-label="Retos">
         <section class="intro" aria-labelledby="pageTitle">
           <p class="eyebrow"><span class="eyebrow-dot"></span> TU ESPACIO PERSONAL</p>
-          <h1 id="pageTitle">Lo que quieres<br /><span>lograr.</span></h1>
+          <h1 id="pageTitle" tabindex="-1">Lo que quieres<br /><span>lograr.</span></h1>
           <p class="intro-copy">Cada gran cambio empieza con un pequeño paso.</p>
           <div class="progress-summary" aria-label="Resumen de progreso">
             <div class="progress-copy"><span id="progressLabel">Tu camino, a tu ritmo</span><span id="progressNumbers">0 de 0</span></div>
@@ -192,6 +229,8 @@
 
     <canvas id="celebrationCanvas" class="celebration-canvas" aria-hidden="true"></canvas>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+    <script type="module" src="./lockscreen.js"></script>
     <script type="module" src="./app.js"></script>
   </body>
 </html>

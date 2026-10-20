@@ -2,6 +2,10 @@
 
 PWA mobile-first para crear, seguir y celebrar retos personales. No necesita backend ni dependencias de instalación: los retos se guardan en el almacenamiento local del navegador.
 
+Al abrirla, solicita el PIN `0000` antes de mostrar la interfaz.
+
+> El PIN es una pantalla de acceso visual, no un mecanismo de cifrado: no protege los datos frente a alguien con acceso a las herramientas del navegador o al almacenamiento local del dispositivo.
+
 ## Probar en local
 
 Desde esta carpeta, inicia un servidor HTTP:
