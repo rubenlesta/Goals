@@ -1,8 +1,9 @@
 import { celebrate } from "./celebration.js";
-import { categories, loadGoals, saveGoals } from "./goals-store.js";
+import { categories, loadGoals, parseStreakRecord, saveGoals } from "./goals-store.js";
 
 const goalList = document.querySelector("#goalList");
 const historyList = document.querySelector("#historyList");
+const historyDialog = document.querySelector("#historyDialog");
 const featuredGrid = document.querySelector("#featuredGrid");
 const goldGallery = document.querySelector("#goldGallery");
 const emptyState = document.querySelector("#emptyState");
@@ -19,6 +20,8 @@ let editingId = null;
 let memoryGoalId = null;
 let celebratingGoalId = null;
 let toastTimeout;
+let habitDayTimeout;
+let renderedHabitDate = "";
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (character) => ({
@@ -33,23 +36,31 @@ function formatDate(date, includeYear = true) {
   return new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "long", ...(includeYear && { year: "numeric" }) }).format(parsed);
 }
 
+function localDateKey(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function previousDateKey(date = new Date()) {
+  const previous = new Date(date);
+  previous.setDate(previous.getDate() - 1);
+  return localDateKey(previous);
+}
+
 function completionDate(goal) {
   return goal.completedAt || goal.createdAt;
 }
 
 function completedGoals() {
-  return goals.filter((goal) => goal.completed);
+  return goals.filter((goal) => goal.category !== "habit" && goal.completed);
 }
 
 function updateCounters() {
   const completed = completedGoals();
-  const active = goals.filter((goal) => !goal.completed);
+  const active = goals.filter((goal) => goal.category === "habit" || !goal.completed);
   document.querySelector("#activeCount").textContent = String(active.length);
   document.querySelector("#headerDoneCount").textContent = String(completed.length);
-  document.querySelector("#progressNumbers").textContent = `${completed.length} de ${goals.length}`;
-  document.querySelector("#progressLabel").textContent = completed.length ? "Mira todo lo que has avanzado" : "Tu camino, a tu ritmo";
-  document.querySelector("#overallProgress").style.width = `${goals.length ? (completed.length / goals.length) * 100 : 0}%`;
-  document.querySelector("#historyCount").textContent = String(completed.filter((goal) => goal.category !== "gold").length);
+  document.querySelector("#historyCount").textContent = String(completed.length);
+  document.querySelector("#clearHistory").disabled = completed.length === 0;
   document.querySelector("#goldCount").textContent = String(completed.filter((goal) => goal.category === "gold").length);
 }
 
@@ -68,23 +79,37 @@ function render() {
   renderChallenges();
   renderShowcase();
   renderHistory();
+  renderedHabitDate = localDateKey();
 }
 
 function cardMarkup(goal, index) {
   const category = categories[goal.category];
+  const habitDoneToday = goal.category === "habit" && goal.lastCompletedDate === localDateKey();
+  const completed = goal.completed || habitDoneToday;
   const dateMarkup = goal.targetDate ? `<span class="goal-date"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M5 2v3M11 2v3M2.5 6.5h11"/></svg>${escapeHtml(formatDate(`${goal.targetDate}T12:00:00`))}</span>` : "";
-  const recordMarkup = goal.bestRecord ? `<div class="goal-record">Récord actual <strong>· ${escapeHtml(goal.bestRecord)}</strong></div>` : "";
+  const habitStreak = goal.lastCompletedDate === localDateKey() || goal.lastCompletedDate === previousDateKey()
+    ? Number(goal.streakDays) || 0
+    : 0;
+  const recordMarkup = goal.category === "habit"
+    ? `<div class="goal-record">Racha actual <strong>· ${habitStreak} ${habitStreak === 1 ? "día" : "días"}</strong>${goal.bestStreakDays ? ` · Récord de racha <strong>${goal.bestStreakDays} ${goal.bestStreakDays === 1 ? "día" : "días"}</strong>` : ""}${goal.bestRecord && !parseStreakRecord(goal.bestRecord) ? `<br />Récord anotado <strong>· ${escapeHtml(goal.bestRecord)}</strong>` : ""}</div>`
+    : goal.bestRecord ? `<div class="goal-record">Récord actual <strong>· ${escapeHtml(goal.bestRecord)}</strong></div>` : "";
   const pinMarkup = goal.completed ? `<button class="pin-button${goal.pinned ? " is-pinned" : ""}" type="button" data-pin="${escapeHtml(goal.id)}" aria-label="${goal.pinned ? "Quitar de la Vitrina" : "Fijar en la Vitrina"}" aria-pressed="${Boolean(goal.pinned)}">${goal.pinned ? "★" : "☆"}</button>` : "";
-  const completedClass = goal.completed ? " is-completed" : "";
+  const completedClass = goal.completed ? " is-completed" : habitDoneToday ? " is-completed-day" : "";
+  const editMenuMarkup = goal.completed ? "" : `<div class="goal-menu-wrap">
+      <button class="more-button" type="button" aria-label="Opciones de ${escapeHtml(goal.title)}" aria-haspopup="menu" aria-expanded="false">···</button>
+      <div class="goal-menu" role="menu" hidden>
+        <button class="goal-menu-item" type="button" role="menuitem">Editar / Detalles</button>
+      </div>
+    </div>`;
   return `<article class="goal-card${completedClass}" data-id="${escapeHtml(goal.id)}" data-category="${goal.category}" style="animation-delay:${Math.min(index * 45, 180)}ms">
-    <input class="complete-toggle" type="checkbox" aria-label="${goal.completed ? "Reto conseguido" : `Completar ${escapeHtml(goal.title)}`}" ${goal.completed ? "checked disabled" : ""} />
+    <input class="complete-toggle" type="checkbox" aria-label="${habitDoneToday ? "Hábito hecho hoy" : goal.completed ? "Reto conseguido" : `Completar ${escapeHtml(goal.title)}`}" ${completed ? "checked disabled" : ""} />
     <div class="goal-main" role="button" tabindex="0" aria-label="${goal.completed ? "Recordar" : "Editar"} ${escapeHtml(goal.title)}">
       <span class="goal-title">${escapeHtml(goal.title)}</span>
-      <div class="goal-meta"><span class="category-badge"><span class="badge-emoji">${category.emoji}</span>${category.label}</span>${dateMarkup}</div>
+      <div class="goal-meta"><span class="category-badge"><span class="badge-emoji">${category.emoji}</span>${category.label}</span>${habitDoneToday ? '<span class="habit-done-badge">Hecho hoy</span>' : ""}${dateMarkup}</div>
       ${recordMarkup}
     </div>
     ${pinMarkup}
-    ${goal.completed ? "" : `<button class="more-button" type="button" aria-label="Editar ${escapeHtml(goal.title)}">···</button>`}
+    ${editMenuMarkup}
   </article>`;
 }
 
@@ -106,7 +131,7 @@ function achievementCardMarkup(goal, index, featured = false) {
 }
 
 function renderChallenges() {
-  const active = goals.filter((goal) => !goal.completed);
+  const active = goals.filter((goal) => goal.category === "habit" || !goal.completed);
   const filtered = active.filter((goal) => activeFilter === "all" || goal.category === activeFilter);
   goalList.classList.remove("history-view");
   goalList.innerHTML = filtered.map((goal, index) => cardMarkup(goal, index)).join("");
@@ -155,7 +180,7 @@ function updateThemeOptions(golds) {
 }
 
 function renderHistory() {
-  const history = completedGoals().filter((goal) => goal.category !== "gold")
+  const history = completedGoals()
     .sort((a, b) => new Date(completionDate(b)) - new Date(completionDate(a)));
   historyList.innerHTML = history.map((goal, index) => cardMarkup(goal, index)).join("");
   historyList.hidden = history.length === 0;
@@ -179,11 +204,30 @@ function persistGoals(updatedGoals) {
   return true;
 }
 
+function openHistory() {
+  renderHistory();
+  historyDialog.showModal();
+}
+
+function clearHistory() {
+  const archived = completedGoals();
+  if (!archived.length) return;
+  if (!window.confirm(`¿Vaciar el historial? Se eliminarán ${archived.length} retos conseguidos. Los hábitos se conservarán.`)) return;
+  if (!persistGoals(goals.filter((goal) => goal.category === "habit" || !goal.completed))) return;
+  render();
+  showToast("Historial borrado.");
+}
+
 function openGoalDialog(goal = null) {
   editingId = goal?.id ?? null;
   form.reset();
-  document.querySelector("#dialogTitle").textContent = goal ? "Editar reto" : "Nuevo reto";
+  dialog.classList.toggle("is-creating", !goal);
+  document.querySelector("#dialogTitle").textContent = goal ? "Detalles del reto" : "Nuevo reto";
   document.querySelector("#deleteGoal").hidden = !goal;
+  document.querySelector("#goalDetails").hidden = !goal;
+  document.querySelector("#saveGoal").innerHTML = goal
+    ? 'Guardar cambios <span aria-hidden="true">↗</span>'
+    : 'Crear reto <span aria-hidden="true">↗</span>';
   titleInput.value = goal?.title ?? "";
   document.querySelector(`#goalForm input[name="category"][value="${goal?.category ?? "bronze"}"]`).checked = true;
   document.querySelector("#targetDate").value = goal?.targetDate ?? "";
@@ -209,6 +253,7 @@ form.addEventListener("submit", (event) => {
   const now = new Date().toISOString();
   const nextNotes = String(data.get("notes")).trim();
   const nextRecord = String(data.get("bestRecord")).trim();
+  const nextCategory = String(data.get("category"));
   const previousNotesHistory = notesHistoryFor(previous, now);
   if (previous && nextNotes && nextNotes !== previous.notes) previousNotesHistory.push({ text: nextNotes, createdAt: now });
   const recordHistory = [...(previous?.recordHistory ?? [])];
@@ -216,17 +261,22 @@ form.addEventListener("submit", (event) => {
   const goal = {
     id: editingId ?? crypto.randomUUID(),
     title: String(data.get("title")).trim(),
-    category: String(data.get("category")),
+    category: nextCategory,
     targetDate: String(data.get("targetDate")),
     bestRecord: nextRecord,
     notes: nextNotes,
-    completed: previous?.completed ?? false,
-    completedAt: previous?.completedAt ?? "",
-    pinned: previous?.pinned ?? false,
+    completed: nextCategory === "habit" ? false : previous?.completed ?? false,
+    completedAt: nextCategory === "habit" ? "" : previous?.completedAt ?? "",
+    pinned: nextCategory === "habit" ? false : previous?.pinned ?? false,
     reflection: previous?.reflection ?? "",
     tags: String(data.get("tags")).split(",").map((tag) => tag.trim()).filter(Boolean),
     notesHistory: previousNotesHistory,
     recordHistory,
+    ...(nextCategory === "habit" && {
+      lastCompletedDate: previous?.category === "habit" ? previous.lastCompletedDate ?? "" : "",
+      streakDays: previous?.category === "habit" ? previous.streakDays ?? 0 : 0,
+      bestStreakDays: previous?.category === "habit" ? previous.bestStreakDays ?? parseStreakRecord(nextRecord) : parseStreakRecord(nextRecord),
+    }),
     createdAt: previous?.createdAt ?? now,
   };
   if (!goal.title || !categories[goal.category]) return;
@@ -441,6 +491,20 @@ function handleGoalListClick(event) {
   if (!card) return;
   const goal = goals.find((item) => item.id === card.dataset.id);
   if (!goal) return;
+  if (event.target.matches(".complete-toggle") && goal.category === "habit" && goal.lastCompletedDate !== localDateKey()) {
+    const today = localDateKey();
+    const streakDays = goal.lastCompletedDate === previousDateKey() ? (Number(goal.streakDays) || 0) + 1 : 1;
+    const updatedGoal = {
+      ...goal,
+      lastCompletedDate: today,
+      streakDays,
+      bestStreakDays: Math.max(Number(goal.bestStreakDays) || 0, streakDays),
+    };
+    if (!persistGoals(goals.map((item) => item.id === goal.id ? updatedGoal : item))) return;
+    renderChallenges();
+    celebrate().then(() => showToast("¡Hábito hecho hoy! Un día más de constancia."));
+    return;
+  }
   if (event.target.matches(".complete-toggle") && !goal.completed) {
     const now = new Date().toISOString();
     const history = notesHistoryFor(goal, now);
@@ -461,7 +525,26 @@ function handleGoalListClick(event) {
     });
     return;
   }
-  if (event.target.closest(".more-button") || event.target.closest(".goal-main")) {
+  const moreButton = event.target.closest(".more-button");
+  if (moreButton) {
+    const menu = moreButton.nextElementSibling;
+    const shouldOpen = menu.hidden;
+    document.querySelectorAll(".goal-menu").forEach((item) => {
+      item.hidden = true;
+      item.previousElementSibling.setAttribute("aria-expanded", "false");
+    });
+    menu.hidden = !shouldOpen;
+    moreButton.setAttribute("aria-expanded", String(shouldOpen));
+    return;
+  }
+  if (event.target.closest(".goal-menu-item")) {
+    const menu = event.target.closest(".goal-menu");
+    menu.hidden = true;
+    menu.previousElementSibling.setAttribute("aria-expanded", "false");
+    openGoalDialog(goal);
+    return;
+  }
+  if (event.target.closest(".goal-main")) {
     if (goal.completed) openMemory(goal.id);
     else openGoalDialog(goal);
   }
@@ -489,7 +572,7 @@ function handleAchievementClick(event) {
   }
   const openButton = event.target.closest("[data-memory]");
   if (openButton) openMemory(openButton.dataset.memory);
-  if (event.target.closest("[data-go-history]")) navigate("history");
+  if (event.target.closest("[data-go-history]")) openHistory();
 }
 featuredGrid.addEventListener("click", handleAchievementClick);
 goldGallery.addEventListener("click", handleAchievementClick);
@@ -506,10 +589,22 @@ document.querySelector("#closeDialog").addEventListener("click", () => dialog.cl
 dialog.addEventListener("click", (event) => {
   if (event.target === dialog) dialog.close();
 });
+document.addEventListener("click", (event) => {
+  if (event.target.closest(".goal-menu-wrap")) return;
+  document.querySelectorAll(".goal-menu").forEach((menu) => {
+    menu.hidden = true;
+    menu.previousElementSibling.setAttribute("aria-expanded", "false");
+  });
+});
 document.querySelector("#addGoal").addEventListener("click", () => openGoalDialog());
 document.querySelector("#emptyAdd").addEventListener("click", () => openGoalDialog());
-document.querySelector("#showHistory").addEventListener("click", () => navigate("history"));
-document.querySelector("#historyShortcut").addEventListener("click", () => navigate("history"));
+document.querySelector("#showHistory").addEventListener("click", openHistory);
+document.querySelector("#historyShortcut").addEventListener("click", openHistory);
+document.querySelector("#closeHistory").addEventListener("click", () => historyDialog.close());
+document.querySelector("#clearHistory").addEventListener("click", clearHistory);
+historyDialog.addEventListener("click", (event) => {
+  if (event.target === historyDialog) historyDialog.close();
+});
 
 function navigate(screen) {
   activeScreen = screen;
@@ -529,10 +624,33 @@ filterButtons.forEach((button) => button.addEventListener("click", () => {
 document.querySelector("#goldSort").addEventListener("change", renderShowcase);
 document.querySelector("#goldTheme").addEventListener("change", renderShowcase);
 
+function refreshHabitDay() {
+  const today = localDateKey();
+  if (today === renderedHabitDate) return;
+  renderChallenges();
+  renderedHabitDate = today;
+}
+
+function scheduleHabitDayRefresh() {
+  clearTimeout(habitDayTimeout);
+  const nextDay = new Date();
+  nextDay.setHours(24, 0, 0, 250);
+  habitDayTimeout = setTimeout(() => {
+    refreshHabitDay();
+    scheduleHabitDayRefresh();
+  }, nextDay.getTime() - Date.now());
+}
+
+window.addEventListener("focus", refreshHabitDay);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshHabitDay();
+});
+
 document.addEventListener("rumbo:unlocked", () => {
   const loadedGoals = loadGoals();
   goals = loadedGoals.goals;
   render();
+  scheduleHabitDayRefresh();
   if (loadedGoals.error) showToast(loadedGoals.error);
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     navigator.serviceWorker.register("./sw.js").catch((error) => {

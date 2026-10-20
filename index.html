@@ -62,14 +62,10 @@
 
       <main>
         <section class="screen-view" id="challengesView" aria-label="Retos">
-        <section class="intro" aria-labelledby="pageTitle">
+        <section class="intro challenge-intro" aria-labelledby="pageTitle">
           <p class="eyebrow"><span class="eyebrow-dot"></span> TU ESPACIO PERSONAL</p>
-          <h1 id="pageTitle" tabindex="-1">Lo que quieres<br /><span>lograr.</span></h1>
-          <p class="intro-copy">Cada gran cambio empieza con un pequeño paso.</p>
-          <div class="progress-summary" aria-label="Resumen de progreso">
-            <div class="progress-copy"><span id="progressLabel">Tu camino, a tu ritmo</span><span id="progressNumbers">0 de 0</span></div>
-            <div class="progress-track"><span id="overallProgress"></span></div>
-          </div>
+          <h1 id="pageTitle" tabindex="-1">Mis <span>retos.</span></h1>
+          <p class="intro-copy">Un paso cada día.</p>
         </section>
 
         <section class="goals-section" aria-label="Tus retos">
@@ -129,18 +125,6 @@
           </section>
         </section>
 
-        <section class="screen-view history-screen" id="historyView" aria-labelledby="historyTitle" hidden>
-          <section class="intro">
-            <p class="eyebrow"><span class="eyebrow-dot"></span> TU RECORRIDO</p>
-            <h1 id="historyTitle">Cada paso<br /><span>cuenta.</span></h1>
-            <p class="intro-copy">Todos los retos que ya forman parte de tu historia.</p>
-          </section>
-          <section class="goals-section" aria-label="Historial de retos conseguidos">
-            <div class="section-heading"><div><p class="section-kicker">LO HAS HECHO</p><h2>Historial <span id="historyCount" class="count-badge">0</span></h2></div></div>
-            <div id="historyList" class="goal-list history-view" aria-live="polite"></div>
-            <div id="historyEmpty" class="empty-state" hidden><div class="empty-mark" aria-hidden="true">✳</div><h3>Tus logros aparecerán aquí.</h3><p>Completa un reto y vuelve para revivir el momento.</p></div>
-          </section>
-        </section>
       </main>
 
       <footer class="footer-note"><span>Un paso cada día.</span><span class="footer-sparkle">✳</span></footer>
@@ -154,7 +138,6 @@
     <nav class="bottom-nav" aria-label="Navegación principal">
       <button class="nav-item is-active" type="button" data-screen="challenges" aria-current="page"><span class="nav-icon" aria-hidden="true">🎯</span><span>Retos</span></button>
       <button class="nav-item" type="button" data-screen="showcase"><span class="nav-icon" aria-hidden="true">🏆</span><span>Vitrina</span></button>
-      <button class="nav-item" type="button" data-screen="history"><span class="nav-icon" aria-hidden="true">📜</span><span>Historial</span></button>
     </nav>
 
     <dialog class="goal-dialog" id="goalDialog" aria-labelledby="dialogTitle">
@@ -163,7 +146,7 @@
           <div><p class="section-kicker">UN PASO MÁS</p><h2 id="dialogTitle">Nuevo reto</h2></div>
           <button class="icon-button close-button" id="closeDialog" type="button" aria-label="Cerrar">×</button>
         </div>
-        <label class="field-label" for="goalTitle">¿Qué quieres lograr?<span class="required-mark">*</span></label>
+        <label class="field-label" for="goalTitle">Nombre / título del reto<span class="required-mark">*</span></label>
         <input class="text-input" id="goalTitle" name="title" maxlength="80" placeholder="Ej. Correr mi primera media maratón" required />
         <fieldset class="category-field">
           <legend class="field-label">Elige una categoría</legend>
@@ -174,19 +157,35 @@
             <label class="category-option category-habit"><input type="radio" name="category" value="habit" /><span class="category-emoji">⚡</span><span>Hábito</span><small>Rutina</small></label>
           </div>
         </fieldset>
-        <div class="field-grid">
-          <div><label class="field-label" for="targetDate">Fecha objetivo <span class="optional-mark">opcional</span></label><input class="text-input" id="targetDate" name="targetDate" type="date" /></div>
-          <div><label class="field-label" for="bestRecord">Récord actual <span class="optional-mark">opcional</span></label><input class="text-input" id="bestRecord" name="bestRecord" maxlength="80" placeholder="Ej. 10 km completados" /></div>
+        <div id="goalDetails" hidden>
+          <div class="field-grid">
+            <div><label class="field-label" for="targetDate">Fecha objetivo <span class="optional-mark">opcional</span></label><input class="text-input" id="targetDate" name="targetDate" type="date" /></div>
+            <div><label class="field-label" for="bestRecord">Lo más cerca que estuve <span class="optional-mark">opcional</span></label><input class="text-input" id="bestRecord" name="bestRecord" maxlength="80" placeholder="Ej. 10 km completados" /></div>
+          </div>
+          <label class="field-label" for="goalNotes">Notas e ideas <span class="optional-mark">opcional</span></label>
+          <textarea class="text-input notes-input" id="goalNotes" name="notes" rows="3" maxlength="1000" placeholder="Estrategias, avances, lo que te motive…"></textarea>
+          <label class="field-label" for="goalTags">Temas o etiquetas <span class="optional-mark">opcional · separadas por comas</span></label>
+          <input class="text-input" id="goalTags" name="tags" maxlength="120" placeholder="Ej. deporte, aprendizaje, bienestar" />
         </div>
-        <label class="field-label" for="goalNotes">Notas e ideas <span class="optional-mark">opcional</span></label>
-        <textarea class="text-input notes-input" id="goalNotes" name="notes" rows="3" maxlength="1000" placeholder="Estrategias, avances, lo que te motive…"></textarea>
-        <label class="field-label" for="goalTags">Temas o etiquetas <span class="optional-mark">opcional · separadas por comas</span></label>
-        <input class="text-input" id="goalTags" name="tags" maxlength="120" placeholder="Ej. deporte, aprendizaje, bienestar" />
         <div class="form-footer">
           <button class="delete-button" id="deleteGoal" type="button" hidden>Eliminar reto</button>
-          <button class="primary-button" type="submit">Guardar reto <span aria-hidden="true">↗</span></button>
+          <button class="primary-button" id="saveGoal" type="submit">Crear reto <span aria-hidden="true">↗</span></button>
         </div>
       </form>
+    </dialog>
+
+    <dialog class="goal-dialog history-dialog" id="historyDialog" aria-labelledby="historyTitle">
+      <div class="dialog-top">
+        <div><p class="section-kicker">TU RECORRIDO</p><h2 id="historyTitle">Historial <span id="historyCount" class="count-badge">0</span></h2></div>
+        <button class="icon-button close-button" id="closeHistory" type="button" aria-label="Cerrar historial">×</button>
+      </div>
+      <section class="goals-section" aria-label="Retos conseguidos">
+        <div id="historyList" class="goal-list history-view" aria-live="polite"></div>
+        <div id="historyEmpty" class="empty-state" hidden><div class="empty-mark" aria-hidden="true">✳</div><h3>Tus logros aparecerán aquí.</h3><p>Completa un reto y vuelve para revivir el momento.</p></div>
+      </section>
+      <div class="history-actions">
+        <button class="delete-button" id="clearHistory" type="button">Vaciar historial</button>
+      </div>
     </dialog>
 
     <dialog class="goal-dialog memory-dialog" id="memoryDialog" aria-labelledby="memoryTitle">

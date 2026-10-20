@@ -23,11 +23,12 @@ Consulta la [guía paso a paso para probar e instalar Rumbo en tu móvil](./To_i
 ## Incluye
 
 - Retos de ejemplo al primer inicio y persistencia en `localStorage`.
-- Filtros por categoría y navegación entre retos, vitrina e historial.
+- Filtros por categoría y navegación entre Retos y Vitrina; el historial se abre desde la cabecera o «Conseguidos».
 - Alta, edición y eliminación de retos, con fecha objetivo, récord y notas.
 - Celebración con confeti al completar; los hitos Oro abren una invitación para fijarlos en la Vitrina de Honor.
 - Vitrina con tres espacios destacados, archivo Oro por fecha/tema, recuerdos con notas y récords previos, reflexión final y tarjetas PNG para compartir.
-- Historial separado para los retos completados de Plata, Bronce y Hábitos.
+- Hábitos con check-in diario, fecha de última realización y seguimiento de rachas; se mantienen en Retos y no se archivan al completarlos.
+- Historial de retos conseguidos con opción de vaciar los logros archivados.
 - Persistencia de fecha de consecución, etiquetas, estado fijado y reflexión final en `localStorage`.
 - Manifiesto, icono y caché offline de los recursos principales.
 - Código separado por responsabilidades: interfaz (`app.js`), datos (`goals-store.js`) y confeti (`celebration.js`).

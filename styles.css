@@ -35,6 +35,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .history-shortcut { width: auto; min-width: 45px; height: 38px; padding: 0 10px; border-radius: 20px; color: var(--muted); font-size: 12px; }
 .history-shortcut svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .intro { padding: 56px 0 47px; }
+.challenge-intro { padding: 24px 0 25px; }
+.challenge-intro .eyebrow { margin-bottom: 10px; }
+.challenge-intro h1 { margin-bottom: 7px; font-size: clamp(30px, 6vw, 38px); letter-spacing: -2px; }
+.challenge-intro .intro-copy { font-size: 12px; }
 .eyebrow, .section-kicker { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 1.65px; }
 .eyebrow { display: flex; align-items: center; gap: 8px; margin: 0 0 19px; }
 .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
@@ -42,11 +46,6 @@ h1, h2, h3, p { margin-top: 0; }
 h1 { margin-bottom: 12px; font: 600 clamp(42px, 8vw, 59px)/1.08 var(--display); letter-spacing: -3.8px; }
 h1 span { color: var(--green); }
 .intro-copy { margin: 0; color: var(--muted); font-size: 14px; }
-.progress-summary { margin-top: 34px; max-width: 390px; }
-.progress-copy { display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--muted); font-size: 11px; }
-.progress-copy span:last-child { color: #565850; font-weight: 600; }
-.progress-track { height: 4px; overflow: hidden; border-radius: 8px; background: #e7e8e2; }
-.progress-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--green); transition: width .5s ease; }
 .goals-section { border-top: 1px solid var(--line); padding-top: 29px; }
 .section-heading { display: flex; justify-content: space-between; align-items: end; }
 .section-kicker { margin: 0 0 8px; font-size: 9px; letter-spacing: 1.45px; }
@@ -66,6 +65,8 @@ h1 span { color: var(--green); }
 .goal-card[data-category="gold"] { --category: var(--gold); }.goal-card[data-category="silver"] { --category: var(--silver); }.goal-card[data-category="bronze"] { --category: var(--bronze); }.goal-card[data-category="habit"] { --category: var(--habit); }
 .goal-card.is-completing { opacity: 0; transform: translateY(8px) scale(.98); }
 .goal-card.is-completing .goal-title { text-decoration: line-through; text-decoration-color: #989b91; }
+.goal-card.is-completed-day .goal-title { color: #777970; text-decoration: line-through; text-decoration-color: #aeb3a8; }
+.habit-done-badge { display: inline-flex; align-items: center; padding: 4px 7px; border-radius: 5px; background: #edf1e8; color: #5e7452; font-size: 9px; font-weight: 600; }
 @keyframes card-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 .complete-toggle { appearance: none; position: relative; width: 21px; height: 21px; margin: 2px 0 0; border: 1.5px solid #cfd1c9; border-radius: 50%; cursor: pointer; transition: all .2s; }
 .complete-toggle:hover { border-color: var(--category); }
@@ -82,6 +83,10 @@ h1 span { color: var(--green); }
 .goal-date svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.5; }
 .more-button { width: 28px; height: 28px; margin: -4px -6px 0 0; border: 0; border-radius: 50%; background: transparent; color: #9a9b94; font-size: 19px; cursor: pointer; }
 .more-button:hover { background: #f2f3ef; color: var(--ink); }
+.goal-menu-wrap { position: relative; justify-self: end; }
+.goal-menu { position: absolute; z-index: 4; top: 30px; right: 0; min-width: 145px; padding: 5px; border: 1px solid var(--line); border-radius: 9px; background: #fff; box-shadow: 0 8px 24px #20211e1a; }
+.goal-menu-item { width: 100%; padding: 9px 10px; border: 0; border-radius: 6px; background: transparent; color: #505149; text-align: left; font-size: 10px; cursor: pointer; }
+.goal-menu-item:hover, .goal-menu-item:focus-visible { background: #f2f3ef; }
 .empty-state { padding: 46px 20px 28px; text-align: center; }
 .empty-mark { margin-bottom: 10px; color: #9aa994; font-size: 24px; }
 .empty-state h3 { margin: 0 0 7px; font: 600 16px var(--display); }
@@ -93,6 +98,7 @@ h1 span { color: var(--green); }
 .add-button:hover { background: #435446; transform: translateX(-50%) translateY(-2px); }
 .add-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .goal-dialog { width: min(100% - 28px, 520px); max-height: min(90vh, 820px); overflow-y: auto; padding: 28px; border: 1px solid var(--line); border-radius: 17px; background: var(--paper); color: var(--ink); box-shadow: 0 24px 80px #191c1933; }
+.goal-dialog.is-creating { width: min(100% - 28px, 420px); }
 .goal-dialog::backdrop { background: #1b211bb0; backdrop-filter: blur(3px); }
 .dialog-top { display: flex; align-items: start; justify-content: space-between; margin-bottom: 23px; }
 .dialog-top h2 { font-size: 23px; }
@@ -130,6 +136,7 @@ h1 span { color: var(--green); }
 @media (min-width: 700px) {
   .app-shell { width: min(100% - 80px, 700px); }
   .intro { padding-top: 68px; }
+  .challenge-intro { padding-top: 24px; }
   .goal-list { grid-template-columns: 1fr 1fr; }
   .goal-card { min-height: 115px; }
 }
@@ -231,9 +238,14 @@ h1 .gold-title { color: #a9843d; }
 .gallery-grid { display: grid; gap: 10px; }
 .gallery-empty { padding-top: 36px; }
 .gallery-empty p { line-height: 1.6; }
-.history-screen .goal-card { border-style: dashed; }
-.history-screen .complete-toggle { border-color: var(--green); background: var(--green); cursor: default; }
-.history-screen .complete-toggle::after { content: ""; position: absolute; left: 6px; top: 3px; width: 5px; height: 9px; border: solid white; border-width: 0 1.7px 1.7px 0; transform: rotate(45deg); }
+.history-view .goal-card { border-style: dashed; }
+.history-view .complete-toggle { border-color: var(--green); background: var(--green); cursor: default; }
+.history-view .complete-toggle::after { content: ""; position: absolute; left: 6px; top: 3px; width: 5px; height: 9px; border: solid white; border-width: 0 1.7px 1.7px 0; transform: rotate(45deg); }
+.history-dialog { width: min(100% - 28px, 600px); }
+.history-dialog .dialog-top { margin-bottom: 17px; }
+.history-dialog .goals-section { min-height: 0; padding-top: 0; border-top: 0; }
+.history-actions { display: flex; justify-content: flex-end; margin-top: 15px; padding-top: 10px; border-top: 1px solid var(--line); }
+.history-actions .delete-button:disabled { color: #b4b5ae; cursor: not-allowed; }
 .memory-dialog { width: min(100% - 28px, 540px); }
 .memory-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -8px 0 10px; }
 .memory-category { font-size: 10px; }
