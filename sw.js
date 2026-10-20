@@ -1,4 +1,4 @@
-const CACHE_NAME = "rumbo-static-v8";
+const CACHE_NAME = "rumbo-static-v11";
 const APP_FILES = ["./", "./index.html", "./styles.css", "./app.js", "./goals-store.js", "./celebration.js", "./lockscreen.js", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", (event) => {

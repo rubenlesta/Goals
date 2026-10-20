@@ -1,11 +1,11 @@
 import { celebrate } from "./celebration.js";
-import { categories, loadGoals, parseStreakRecord, saveGoals } from "./goals-store.js";
+import { categories, loadGoals, saveGoals } from "./goals-store.js";
 
 const goalList = document.querySelector("#goalList");
 const historyList = document.querySelector("#historyList");
 const historyDialog = document.querySelector("#historyDialog");
 const featuredGrid = document.querySelector("#featuredGrid");
-const goldGallery = document.querySelector("#goldGallery");
+const legendGallery = document.querySelector("#legendGallery");
 const emptyState = document.querySelector("#emptyState");
 const dialog = document.querySelector("#goalDialog");
 const memoryDialog = document.querySelector("#memoryDialog");
@@ -17,6 +17,7 @@ let goals = [];
 let activeFilter = "all";
 let activeScreen = "challenges";
 let editingId = null;
+let subtaskDraft = [];
 let memoryGoalId = null;
 let celebratingGoalId = null;
 let toastTimeout;
@@ -40,12 +41,6 @@ function localDateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function previousDateKey(date = new Date()) {
-  const previous = new Date(date);
-  previous.setDate(previous.getDate() - 1);
-  return localDateKey(previous);
-}
-
 function completionDate(goal) {
   return goal.completedAt || goal.createdAt;
 }
@@ -56,12 +51,10 @@ function completedGoals() {
 
 function updateCounters() {
   const completed = completedGoals();
-  const active = goals.filter((goal) => goal.category === "habit" || !goal.completed);
-  document.querySelector("#activeCount").textContent = String(active.length);
   document.querySelector("#headerDoneCount").textContent = String(completed.length);
   document.querySelector("#historyCount").textContent = String(completed.length);
   document.querySelector("#clearHistory").disabled = completed.length === 0;
-  document.querySelector("#goldCount").textContent = String(completed.filter((goal) => goal.category === "gold").length);
+  document.querySelector("#legendCount").textContent = String(completed.filter((goal) => goal.category === "legend").length);
 }
 
 function render() {
@@ -86,29 +79,25 @@ function cardMarkup(goal, index) {
   const category = categories[goal.category];
   const habitDoneToday = goal.category === "habit" && goal.lastCompletedDate === localDateKey();
   const completed = goal.completed || habitDoneToday;
-  const dateMarkup = goal.targetDate ? `<span class="goal-date"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M5 2v3M11 2v3M2.5 6.5h11"/></svg>${escapeHtml(formatDate(`${goal.targetDate}T12:00:00`))}</span>` : "";
-  const habitStreak = goal.lastCompletedDate === localDateKey() || goal.lastCompletedDate === previousDateKey()
-    ? Number(goal.streakDays) || 0
-    : 0;
-  const recordMarkup = goal.category === "habit"
-    ? `<div class="goal-record">Racha actual <strong>· ${habitStreak} ${habitStreak === 1 ? "día" : "días"}</strong>${goal.bestStreakDays ? ` · Récord de racha <strong>${goal.bestStreakDays} ${goal.bestStreakDays === 1 ? "día" : "días"}</strong>` : ""}${goal.bestRecord && !parseStreakRecord(goal.bestRecord) ? `<br />Récord anotado <strong>· ${escapeHtml(goal.bestRecord)}</strong>` : ""}</div>`
-    : goal.bestRecord ? `<div class="goal-record">Récord actual <strong>· ${escapeHtml(goal.bestRecord)}</strong></div>` : "";
-  const pinMarkup = goal.completed ? `<button class="pin-button${goal.pinned ? " is-pinned" : ""}" type="button" data-pin="${escapeHtml(goal.id)}" aria-label="${goal.pinned ? "Quitar de la Vitrina" : "Fijar en la Vitrina"}" aria-pressed="${Boolean(goal.pinned)}">${goal.pinned ? "★" : "☆"}</button>` : "";
   const completedClass = goal.completed ? " is-completed" : habitDoneToday ? " is-completed-day" : "";
+  const completedSubtasks = (goal.subtasks ?? []).filter((subtask) => subtask.completed).length;
+  const chainMarkup = goal.subtasks?.length ? `<div class="goal-chain">
+      <button class="chain-toggle" type="button" data-toggle-chain aria-expanded="false">Camino <span>${completedSubtasks}/${goal.subtasks.length}</span></button>
+      <div class="chain-steps" hidden>${goal.subtasks.map((subtask) => `<label class="chain-step"><input type="checkbox" data-subtask="${escapeHtml(subtask.id)}" ${subtask.completed ? "checked" : ""} ${goal.completed ? "disabled" : ""} /><span>${escapeHtml(subtask.title)}</span></label>`).join("")}</div>
+    </div>` : "";
   const editMenuMarkup = goal.completed ? "" : `<div class="goal-menu-wrap">
       <button class="more-button" type="button" aria-label="Opciones de ${escapeHtml(goal.title)}" aria-haspopup="menu" aria-expanded="false">···</button>
       <div class="goal-menu" role="menu" hidden>
-        <button class="goal-menu-item" type="button" role="menuitem">Editar / Detalles</button>
+        <button class="goal-menu-item" type="button" role="menuitem">Editar / Notas y camino</button>
       </div>
     </div>`;
   return `<article class="goal-card${completedClass}" data-id="${escapeHtml(goal.id)}" data-category="${goal.category}" style="animation-delay:${Math.min(index * 45, 180)}ms">
     <input class="complete-toggle" type="checkbox" aria-label="${habitDoneToday ? "Hábito hecho hoy" : goal.completed ? "Reto conseguido" : `Completar ${escapeHtml(goal.title)}`}" ${completed ? "checked disabled" : ""} />
     <div class="goal-main" role="button" tabindex="0" aria-label="${goal.completed ? "Recordar" : "Editar"} ${escapeHtml(goal.title)}">
       <span class="goal-title">${escapeHtml(goal.title)}</span>
-      <div class="goal-meta"><span class="category-badge"><span class="badge-emoji">${category.emoji}</span>${category.label}</span>${habitDoneToday ? '<span class="habit-done-badge">Hecho hoy</span>' : ""}${dateMarkup}</div>
-      ${recordMarkup}
+      <div class="goal-meta"><span class="category-badge"><span class="badge-emoji">${category.emoji}</span>${category.label}</span></div>
     </div>
-    ${pinMarkup}
+    ${chainMarkup}
     ${editMenuMarkup}
   </article>`;
 }
@@ -117,13 +106,13 @@ function achievementCardMarkup(goal, index, featured = false) {
   const category = categories[goal.category];
   const tags = (goal.tags ?? []).slice(0, 2).map((tag) => `<span class="achievement-tag">${escapeHtml(tag)}</span>`).join("");
   return `<article class="achievement-card${featured ? " featured-card" : ""}" style="animation-delay:${Math.min(index * 55, 220)}ms">
-    <button class="pin-button${goal.pinned ? " is-pinned" : ""}" type="button" data-pin="${escapeHtml(goal.id)}" aria-label="${goal.pinned ? "Quitar de la Vitrina" : "Quitar de la Vitrina"}" aria-pressed="true">★</button>
+    <button class="pin-button${goal.pinned ? " is-pinned" : ""}" type="button" data-pin="${escapeHtml(goal.id)}" aria-label="${goal.pinned ? "Quitar de Mis logros" : "Añadir a Mis logros"}" aria-pressed="${Boolean(goal.pinned)}">${goal.pinned ? "★" : "☆"}</button>
+    ${!featured ? `<button class="achievement-delete" type="button" data-delete-legend="${escapeHtml(goal.id)}" aria-label="Eliminar logro Leyenda: ${escapeHtml(goal.title)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>` : ""}
     <div class="achievement-open" role="button" tabindex="0" data-memory="${escapeHtml(goal.id)}" aria-label="Ver recuerdo: ${escapeHtml(goal.title)}">
       <span class="achievement-medal">${category.emoji}</span>
       <span class="achievement-category">${category.label} · HITO CONSEGUIDO</span>
       <strong class="achievement-title">${escapeHtml(goal.title)}</strong>
       <span class="achievement-date">${escapeHtml(formatDate(completionDate(goal)))}</span>
-      ${goal.bestRecord ? `<span class="achievement-record">Récord · ${escapeHtml(goal.bestRecord)}</span>` : ""}
       ${tags ? `<span class="achievement-tags">${tags}</span>` : ""}
       <span class="achievement-view">Ver recuerdo <span aria-hidden="true">↗</span></span>
     </div>
@@ -145,36 +134,36 @@ function renderChallenges() {
 }
 
 function renderShowcase() {
-  const pinned = completedGoals().filter((goal) => goal.pinned)
+  const pinned = completedGoals().filter((goal) => goal.category === "legend" && goal.pinned)
     .sort((a, b) => new Date(completionDate(b)) - new Date(completionDate(a)))
-    .slice(0, 3);
-  document.querySelector("#featuredCount").textContent = `${pinned.length} / 3`;
+    .slice(0, 4);
+  document.querySelector("#featuredCount").textContent = `${pinned.length} / 4`;
   featuredGrid.innerHTML = pinned.length
     ? pinned.map((goal, index) => achievementCardMarkup(goal, index, true)).join("")
-    : `<div class="showcase-empty"><span class="showcase-empty-star" aria-hidden="true">✦</span><div><h3>Tu vitrina empieza con un logro.</h3><p>Fija hasta tres momentos especiales desde cualquier recuerdo completado.</p><button class="text-button" type="button" data-go-history="true">Explorar logros <span aria-hidden="true">↗</span></button></div></div>`;
+    : `<div class="showcase-empty"><span class="showcase-empty-star" aria-hidden="true">✦</span><div><h3>Mis logros empiezan con una Leyenda.</h3><p>Expón hasta cuatro metas vitales desde el recuerdo de un logro Leyenda.</p><button class="text-button" type="button" data-go-history="true">Explorar logros <span aria-hidden="true">↗</span></button></div></div>`;
 
-  const golds = completedGoals().filter((goal) => goal.category === "gold");
-  updateThemeOptions(golds);
-  const selectedTheme = document.querySelector("#goldTheme").value;
-  const sort = document.querySelector("#goldSort").value;
-  let filtered = golds.filter((goal) => selectedTheme === "all" || (goal.tags ?? []).includes(selectedTheme));
+  const legends = completedGoals().filter((goal) => goal.category === "legend");
+  updateThemeOptions(legends);
+  const selectedTheme = document.querySelector("#legendTheme").value;
+  const sort = document.querySelector("#legendSort").value;
+  let filtered = legends.filter((goal) => selectedTheme === "all" || (goal.tags ?? []).includes(selectedTheme));
   if (sort === "oldest") filtered.sort((a, b) => new Date(completionDate(a)) - new Date(completionDate(b)));
   else if (sort === "theme") filtered.sort((a, b) => ((a.tags ?? [a.title])[0] ?? a.title).localeCompare((b.tags ?? [b.title])[0] ?? b.title, "es"));
   else filtered.sort((a, b) => new Date(completionDate(b)) - new Date(completionDate(a)));
-  goldGallery.innerHTML = filtered.map((goal, index) => achievementCardMarkup(goal, index)).join("");
+  legendGallery.innerHTML = filtered.map((goal, index) => achievementCardMarkup(goal, index)).join("");
   const empty = filtered.length === 0;
-  goldGallery.hidden = empty;
-  document.querySelector("#goldEmpty").hidden = !empty;
-  document.querySelector("#goldEmptyTitle").textContent = golds.length ? "No hay hitos para este tema." : "Aún no hay hitos Oro.";
-  document.querySelector("#goldEmptyCopy").textContent = golds.length
+  legendGallery.hidden = empty;
+  document.querySelector("#legendEmpty").hidden = !empty;
+  document.querySelector("#legendEmptyTitle").textContent = legends.length ? "No hay hitos para este tema." : "Aún no hay hitos Leyenda.";
+  document.querySelector("#legendEmptyCopy").textContent = legends.length
     ? "Prueba con otro tema o vuelve a mostrar todos."
-    : "Cuando alcances una meta de largo plazo, su recuerdo vivirá aquí.";
+    : "Cuando consigas una meta vital, su recuerdo vivirá aquí.";
 }
 
-function updateThemeOptions(golds) {
-  const select = document.querySelector("#goldTheme");
+function updateThemeOptions(legends) {
+  const select = document.querySelector("#legendTheme");
   const selected = select.value;
-  const themes = [...new Set(golds.flatMap((goal) => goal.tags ?? []))].sort((a, b) => a.localeCompare(b, "es"));
+  const themes = [...new Set(legends.flatMap((goal) => goal.tags ?? []))].sort((a, b) => a.localeCompare(b, "es"));
   select.innerHTML = `<option value="all">Todos</option>${themes.map((tag) => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`).join("")}`;
   select.value = themes.includes(selected) ? selected : "all";
 }
@@ -205,6 +194,7 @@ function persistGoals(updatedGoals) {
 }
 
 function openHistory() {
+  document.querySelector("#includeLegendHistory").checked = false;
   renderHistory();
   historyDialog.showModal();
 }
@@ -212,31 +202,73 @@ function openHistory() {
 function clearHistory() {
   const archived = completedGoals();
   if (!archived.length) return;
-  if (!window.confirm(`¿Vaciar el historial? Se eliminarán ${archived.length} retos conseguidos. Los hábitos se conservarán.`)) return;
-  if (!persistGoals(goals.filter((goal) => goal.category === "habit" || !goal.completed))) return;
+  const includeLegend = document.querySelector("#includeLegendHistory").checked;
+  const toDelete = archived.filter((goal) => includeLegend || goal.category !== "legend");
+  if (!toDelete.length) {
+    showToast("No hay otros logros que borrar. Activa la opción para incluir los logros Leyenda.");
+    return;
+  }
+  const legendCount = toDelete.filter((goal) => goal.category === "legend").length;
+  const confirmation = `¿Vaciar el historial? Se eliminarán ${toDelete.length} retos conseguidos${legendCount ? `, incluidos ${legendCount} Leyenda` : ""}. ${includeLegend ? "Los hábitos se conservarán." : "Los logros Leyenda y los hábitos se conservarán."}`;
+  if (!window.confirm(confirmation)) return;
+  const deletedIds = new Set(toDelete.map((goal) => goal.id));
+  if (!persistGoals(goals.filter((goal) => !deletedIds.has(goal.id)))) return;
   render();
-  showToast("Historial borrado.");
+  showToast(includeLegend ? "Historial borrado, incluidos los logros Leyenda." : "Historial borrado. Los logros Leyenda se conservaron.");
+}
+
+function renderSubtaskEditor() {
+  const list = document.querySelector("#subtaskEditorList");
+  list.innerHTML = subtaskDraft.map((subtask, index) => `<div class="subtask-editor-row" data-subtask-index="${index}">
+    <input class="text-input subtask-title-input" type="text" maxlength="100" value="${escapeHtml(subtask.title)}" aria-label="Etapa ${index + 1}" placeholder="Nombre de la etapa" />
+    <button class="subtask-order-button" type="button" data-move-subtask="-1" aria-label="Subir etapa" ${index === 0 ? "disabled" : ""}>↑</button>
+    <button class="subtask-order-button" type="button" data-move-subtask="1" aria-label="Bajar etapa" ${index === subtaskDraft.length - 1 ? "disabled" : ""}>↓</button>
+    <button class="subtask-remove-button" type="button" data-remove-subtask aria-label="Eliminar etapa">×</button>
+  </div>`).join("");
 }
 
 function openGoalDialog(goal = null) {
   editingId = goal?.id ?? null;
   form.reset();
+  subtaskDraft = (goal?.subtasks ?? []).map((subtask) => ({ ...subtask }));
   dialog.classList.toggle("is-creating", !goal);
   document.querySelector("#dialogTitle").textContent = goal ? "Detalles del reto" : "Nuevo reto";
   document.querySelector("#deleteGoal").hidden = !goal;
-  document.querySelector("#goalDetails").hidden = !goal;
+  document.querySelector("#goalDetails").hidden = false;
   document.querySelector("#saveGoal").innerHTML = goal
     ? 'Guardar cambios <span aria-hidden="true">↗</span>'
     : 'Crear reto <span aria-hidden="true">↗</span>';
   titleInput.value = goal?.title ?? "";
-  document.querySelector(`#goalForm input[name="category"][value="${goal?.category ?? "bronze"}"]`).checked = true;
-  document.querySelector("#targetDate").value = goal?.targetDate ?? "";
-  document.querySelector("#bestRecord").value = goal?.bestRecord ?? "";
+  document.querySelector(`#goalForm input[name="category"][value="${goal?.category ?? "vida"}"]`).checked = true;
   document.querySelector("#goalNotes").value = goal?.notes ?? "";
   document.querySelector("#goalTags").value = (goal?.tags ?? []).join(", ");
+  renderSubtaskEditor();
   dialog.showModal();
   requestAnimationFrame(() => titleInput.focus());
 }
+
+document.querySelector("#addSubtask").addEventListener("click", () => {
+  subtaskDraft.push({ id: crypto.randomUUID(), title: "", completed: false });
+  renderSubtaskEditor();
+  document.querySelectorAll("#subtaskEditorList .subtask-title-input").at(-1)?.focus();
+});
+document.querySelector("#subtaskEditorList").addEventListener("input", (event) => {
+  if (!event.target.matches(".subtask-title-input")) return;
+  const index = Number(event.target.closest("[data-subtask-index]").dataset.subtaskIndex);
+  if (subtaskDraft[index]) subtaskDraft[index].title = event.target.value;
+});
+document.querySelector("#subtaskEditorList").addEventListener("click", (event) => {
+  const row = event.target.closest("[data-subtask-index]");
+  if (!row) return;
+  const index = Number(row.dataset.subtaskIndex);
+  if (event.target.closest("[data-remove-subtask]")) subtaskDraft.splice(index, 1);
+  else if (event.target.closest("[data-move-subtask]")) {
+    const targetIndex = index + Number(event.target.closest("[data-move-subtask]").dataset.moveSubtask);
+    if (targetIndex < 0 || targetIndex >= subtaskDraft.length) return;
+    [subtaskDraft[index], subtaskDraft[targetIndex]] = [subtaskDraft[targetIndex], subtaskDraft[index]];
+  } else return;
+  renderSubtaskEditor();
+});
 
 function notesHistoryFor(goal, timestamp) {
   const history = [...(goal?.notesHistory ?? [])];
@@ -252,31 +284,25 @@ form.addEventListener("submit", (event) => {
   const previous = goals.find((goal) => goal.id === editingId);
   const now = new Date().toISOString();
   const nextNotes = String(data.get("notes")).trim();
-  const nextRecord = String(data.get("bestRecord")).trim();
   const nextCategory = String(data.get("category"));
   const previousNotesHistory = notesHistoryFor(previous, now);
   if (previous && nextNotes && nextNotes !== previous.notes) previousNotesHistory.push({ text: nextNotes, createdAt: now });
-  const recordHistory = [...(previous?.recordHistory ?? [])];
-  if (previous?.bestRecord && nextRecord !== previous.bestRecord) recordHistory.push({ value: previous.bestRecord, createdAt: now });
+  const subtasks = subtaskDraft
+    .map((subtask) => ({ ...subtask, title: subtask.title.trim() }))
+    .filter((subtask) => subtask.title);
   const goal = {
     id: editingId ?? crypto.randomUUID(),
     title: String(data.get("title")).trim(),
     category: nextCategory,
-    targetDate: String(data.get("targetDate")),
-    bestRecord: nextRecord,
     notes: nextNotes,
     completed: nextCategory === "habit" ? false : previous?.completed ?? false,
     completedAt: nextCategory === "habit" ? "" : previous?.completedAt ?? "",
-    pinned: nextCategory === "habit" ? false : previous?.pinned ?? false,
+    pinned: nextCategory === "legend" ? previous?.pinned ?? false : false,
     reflection: previous?.reflection ?? "",
     tags: String(data.get("tags")).split(",").map((tag) => tag.trim()).filter(Boolean),
     notesHistory: previousNotesHistory,
-    recordHistory,
-    ...(nextCategory === "habit" && {
-      lastCompletedDate: previous?.category === "habit" ? previous.lastCompletedDate ?? "" : "",
-      streakDays: previous?.category === "habit" ? previous.streakDays ?? 0 : 0,
-      bestStreakDays: previous?.category === "habit" ? previous.bestStreakDays ?? parseStreakRecord(nextRecord) : parseStreakRecord(nextRecord),
-    }),
+    subtasks,
+    ...(nextCategory === "habit" && { lastCompletedDate: previous?.category === "habit" ? previous.lastCompletedDate ?? "" : "" }),
     createdAt: previous?.createdAt ?? now,
   };
   if (!goal.title || !categories[goal.category]) return;
@@ -299,16 +325,16 @@ document.querySelector("#deleteGoal").addEventListener("click", () => {
 
 function togglePin(goalId) {
   const goal = goals.find((item) => item.id === goalId);
-  if (!goal?.completed) return;
+  if (!goal?.completed || goal.category !== "legend") return;
   const shouldPin = !goal.pinned;
-  if (shouldPin && completedGoals().filter((item) => item.pinned).length >= 3) {
-    showToast("Tu Vitrina admite hasta tres logros. Quita uno para hacer espacio.");
+  if (shouldPin && completedGoals().filter((item) => item.category === "legend" && item.pinned).length >= 4) {
+    showToast("Mis logros admite hasta cuatro Leyendas. Quita una para hacer espacio.");
     return;
   }
   if (!persistGoals(goals.map((item) => item.id === goalId ? { ...item, pinned: shouldPin } : item))) return;
   render();
   if (memoryGoalId === goalId && memoryDialog.open) renderMemory(goalId);
-  showToast(shouldPin ? "Logro añadido a tu Vitrina." : "Logro retirado de tu Vitrina.");
+  showToast(shouldPin ? "Logro añadido a Mis logros." : "Logro retirado de Mis logros.");
 }
 
 function openMemory(goalId) {
@@ -325,17 +351,19 @@ function renderMemory(goalId) {
   document.querySelector("#memoryTitle").textContent = goal.title;
   document.querySelector("#memoryBadges").innerHTML = `<span class="category-badge memory-category">${categories[goal.category].emoji} ${categories[goal.category].label}</span>${(goal.tags ?? []).map((tag) => `<span class="achievement-tag">${escapeHtml(tag)}</span>`).join("")}`;
   document.querySelector("#memoryDate").textContent = `Conseguido el ${formatDate(completionDate(goal))}`;
-  document.querySelector("#memoryRecord").textContent = goal.bestRecord || "Un logro que no necesita récord.";
+  const memoryChain = document.querySelector("#memoryChain");
+  memoryChain.hidden = !goal.subtasks?.length;
+  memoryChain.innerHTML = goal.subtasks?.length
+    ? `<h3>Retos Cadena · ${goal.subtasks.filter((subtask) => subtask.completed).length}/${goal.subtasks.length}</h3><ol>${goal.subtasks.map((subtask) => `<li>${subtask.completed ? "✓" : "○"} ${escapeHtml(subtask.title)}</li>`).join("")}</ol>`
+    : "";
   const notes = notesHistoryFor(goal, completionDate(goal));
   document.querySelector("#memoryNotes").innerHTML = notes.length
     ? notes.map((note) => `<p class="memory-log-entry"><span>${escapeHtml(formatDate(note.createdAt))}</span>${escapeHtml(note.text)}</p>`).join("")
     : '<p class="memory-log-empty">No se guardaron notas para este reto.</p>';
-  document.querySelector("#memoryRecords").innerHTML = goal.recordHistory?.length
-    ? goal.recordHistory.map((record) => `<p class="memory-log-entry"><span>${escapeHtml(formatDate(record.createdAt))}</span>${escapeHtml(record.value)}</p>`).join("")
-    : '<p class="memory-log-empty">Este fue tu primer récord guardado.</p>';
   document.querySelector("#finalReflection").value = goal.reflection ?? "";
   const pin = document.querySelector("#memoryPin");
-  pin.textContent = goal.pinned ? "★ En tu Vitrina" : "☆ Añadir a la Vitrina";
+  pin.hidden = goal.category !== "legend";
+  pin.textContent = goal.pinned ? "★ En Mis logros" : "☆ Añadir a Mis logros";
   pin.classList.toggle("is-pinned", Boolean(goal.pinned));
 }
 
@@ -354,14 +382,14 @@ memoryDialog.addEventListener("click", (event) => {
   if (event.target === memoryDialog) memoryDialog.close();
 });
 
-function finishGoldCelebration(pin) {
+function finishLegendCelebration(pin) {
   const goal = goals.find((item) => item.id === celebratingGoalId);
   let pinnedOnFinish = pin;
   if (pin && goal && !goal.pinned) {
-    const pinnedCount = completedGoals().filter((item) => item.pinned).length;
-    if (pinnedCount >= 3) {
+    const pinnedCount = completedGoals().filter((item) => item.category === "legend" && item.pinned).length;
+    if (pinnedCount >= 4) {
       pinnedOnFinish = false;
-      showToast("La Vitrina está llena. Puedes fijarlo más tarde desde el recuerdo.");
+      showToast("Mis logros está lleno. Puedes exponerlo más tarde desde el recuerdo.");
     } else pinnedOnFinish = persistGoals(goals.map((item) => item.id === goal.id ? { ...item, pinned: true } : item));
   }
   celebrationDialog.close();
@@ -370,26 +398,44 @@ function finishGoldCelebration(pin) {
   setTimeout(() => {
     celebratingGoalId = null;
     render();
-    if (pinnedOnFinish) showToast("¡Hito celebrado en tu Vitrina!");
-    else if (pin) showToast("¡Reto conseguido! Tu Vitrina está llena; puedes fijarlo desde el recuerdo.");
+    if (pinnedOnFinish) showToast("¡Hito celebrado en Mis logros!");
+    else if (pin) showToast("¡Reto conseguido! Mis logros está lleno; puedes exponerlo desde el recuerdo.");
     else showToast("¡Reto conseguido! Un paso más en tu camino.");
   }, 380);
 }
 
-function openGoldCelebration(goal) {
+function openLegendCelebration(goal) {
   celebratingGoalId = goal.id;
   document.querySelector("#celebrationGoal").textContent = goal.title;
   celebrationDialog.showModal();
 }
 
-document.querySelector("#featureAchievement").addEventListener("click", () => finishGoldCelebration(true));
-document.querySelector("#skipFeature").addEventListener("click", () => finishGoldCelebration(false));
+function completeGoal(goal, card) {
+  const now = new Date().toISOString();
+  const notesHistory = notesHistoryFor(goal, now);
+  if (goal.notes && notesHistory.at(-1)?.text !== goal.notes) notesHistory.push({ text: goal.notes, createdAt: now });
+  const completedGoal = { ...goal, completed: true, completedAt: now, notesHistory };
+  if (!persistGoals(goals.map((item) => item.id === goal.id ? completedGoal : item))) return;
+  celebrate().then(() => {
+    if (completedGoal.category === "legend") openLegendCelebration(completedGoal);
+    else {
+      card?.classList.add("is-completing");
+      setTimeout(() => {
+        render();
+        showToast("¡Reto conseguido! Un paso más en tu camino.");
+      }, 380);
+    }
+  });
+}
+
+document.querySelector("#featureAchievement").addEventListener("click", () => finishLegendCelebration(true));
+document.querySelector("#skipFeature").addEventListener("click", () => finishLegendCelebration(false));
 celebrationDialog.addEventListener("cancel", (event) => {
   event.preventDefault();
-  finishGoldCelebration(false);
+  finishLegendCelebration(false);
 });
 celebrationDialog.addEventListener("click", (event) => {
-  if (event.target === celebrationDialog) finishGoldCelebration(false);
+  if (event.target === celebrationDialog) finishLegendCelebration(false);
 });
 
 async function downloadAchievementCard(goalId) {
@@ -433,11 +479,6 @@ async function downloadAchievementCard(goalId) {
   context.fillStyle = "#536d5a";
   context.font = "500 32px sans-serif";
   context.fillText(`Conseguido el ${formatDate(completionDate(goal))}`, 540, detailsY);
-  if (goal.bestRecord) {
-    context.fillStyle = "#5e5f58";
-    context.font = "500 30px sans-serif";
-    context.fillText(`Récord · ${goal.bestRecord}`.slice(0, 60), 540, detailsY + 72);
-  }
   context.fillStyle = "#536d5a";
   context.font = "800 38px sans-serif";
   context.fillText("rumbo.", 540, 1190);
@@ -460,7 +501,7 @@ async function downloadAchievementCard(goalId) {
 async function shareAchievement(goalId) {
   const goal = goals.find((item) => item.id === goalId);
   if (!goal) return;
-  const message = `He conseguido: ${goal.title} · ${formatDate(completionDate(goal))}${goal.bestRecord ? ` · Récord: ${goal.bestRecord}` : ""}`;
+  const message = `He conseguido: ${goal.title} · ${formatDate(completionDate(goal))}`;
   if (!navigator.share) {
     await downloadAchievementCard(goalId);
     return;
@@ -491,38 +532,50 @@ function handleGoalListClick(event) {
   if (!card) return;
   const goal = goals.find((item) => item.id === card.dataset.id);
   if (!goal) return;
-  if (event.target.matches(".complete-toggle") && goal.category === "habit" && goal.lastCompletedDate !== localDateKey()) {
-    const today = localDateKey();
-    const streakDays = goal.lastCompletedDate === previousDateKey() ? (Number(goal.streakDays) || 0) + 1 : 1;
+  const chainToggle = event.target.closest("[data-toggle-chain]");
+  if (chainToggle) {
+    const steps = chainToggle.nextElementSibling;
+    steps.hidden = !steps.hidden;
+    chainToggle.setAttribute("aria-expanded", String(!steps.hidden));
+    return;
+  }
+  if (event.target.matches("[data-subtask]")) {
+    if (goal.completed) return;
+    const subtaskId = event.target.dataset.subtask;
     const updatedGoal = {
       ...goal,
-      lastCompletedDate: today,
-      streakDays,
-      bestStreakDays: Math.max(Number(goal.bestStreakDays) || 0, streakDays),
+      subtasks: goal.subtasks.map((subtask) => subtask.id === subtaskId
+        ? { ...subtask, completed: event.target.checked }
+        : subtask),
     };
+    if (!persistGoals(goals.map((item) => item.id === goal.id ? updatedGoal : item))) return;
+    const allComplete = updatedGoal.subtasks.length > 0 && updatedGoal.subtasks.every((subtask) => subtask.completed);
+    if (allComplete && window.confirm(`Has completado todas las etapas de "${goal.title}". ¿Marcar también el reto principal como conseguido?`)) {
+      if (goal.category === "habit") {
+        if (!persistGoals(goals.map((item) => item.id === goal.id ? { ...updatedGoal, lastCompletedDate: localDateKey() } : item))) return;
+        renderChallenges();
+        celebrate().then(() => showToast("¡Camino completado! Hábito hecho hoy."));
+      } else completeGoal(updatedGoal, card);
+      return;
+    }
+    renderChallenges();
+    const refreshedCard = goalList.querySelector(`[data-id="${CSS.escape(goal.id)}"]`);
+    if (refreshedCard) {
+      const toggle = refreshedCard.querySelector("[data-toggle-chain]");
+      toggle.nextElementSibling.hidden = false;
+      toggle.setAttribute("aria-expanded", "true");
+    }
+    return;
+  }
+  if (event.target.matches(".complete-toggle") && goal.category === "habit" && goal.lastCompletedDate !== localDateKey()) {
+    const updatedGoal = { ...goal, lastCompletedDate: localDateKey() };
     if (!persistGoals(goals.map((item) => item.id === goal.id ? updatedGoal : item))) return;
     renderChallenges();
     celebrate().then(() => showToast("¡Hábito hecho hoy! Un día más de constancia."));
     return;
   }
   if (event.target.matches(".complete-toggle") && !goal.completed) {
-    const now = new Date().toISOString();
-    const history = notesHistoryFor(goal, now);
-    if (goal.notes && history.at(-1)?.text !== goal.notes) history.push({ text: goal.notes, createdAt: now });
-    const updatedGoal = { ...goal, completed: true, completedAt: now, notesHistory: history };
-    if (!persistGoals(goals.map((item) => item.id === goal.id ? updatedGoal : item))) return;
-    event.target.checked = true;
-    event.target.disabled = true;
-    celebrate().then(() => {
-      if (goal.category === "gold") openGoldCelebration(updatedGoal);
-      else {
-        card.classList.add("is-completing");
-        setTimeout(() => {
-          render();
-          showToast("¡Reto conseguido! Un paso más en tu camino.");
-        }, 380);
-      }
-    });
+    completeGoal(goal, card);
     return;
   }
   const moreButton = event.target.closest(".more-button");
@@ -564,6 +617,17 @@ goalList.addEventListener("keydown", handleGoalListKeydown);
 historyList.addEventListener("keydown", handleGoalListKeydown);
 
 function handleAchievementClick(event) {
+  const deleteButton = event.target.closest("[data-delete-legend]");
+  if (deleteButton) {
+    event.stopPropagation();
+    const goal = goals.find((item) => item.id === deleteButton.dataset.deleteLegend && item.category === "legend" && item.completed);
+    if (!goal || !window.confirm(`¿Eliminar "${goal.title}" del Archivo Leyenda? Esta acción no se puede deshacer.`)) return;
+    if (!persistGoals(goals.filter((item) => item.id !== goal.id))) return;
+    render();
+    if (memoryGoalId === goal.id && memoryDialog.open) memoryDialog.close();
+    showToast("Logro eliminado del Archivo Leyenda.");
+    return;
+  }
   const pinButton = event.target.closest("[data-pin]");
   if (pinButton) {
     event.stopPropagation();
@@ -575,7 +639,7 @@ function handleAchievementClick(event) {
   if (event.target.closest("[data-go-history]")) openHistory();
 }
 featuredGrid.addEventListener("click", handleAchievementClick);
-goldGallery.addEventListener("click", handleAchievementClick);
+legendGallery.addEventListener("click", handleAchievementClick);
 function handleAchievementKeydown(event) {
   if ((event.key === "Enter" || event.key === " ") && event.target.matches("[data-memory]")) {
     event.preventDefault();
@@ -583,7 +647,7 @@ function handleAchievementKeydown(event) {
   }
 }
 featuredGrid.addEventListener("keydown", handleAchievementKeydown);
-goldGallery.addEventListener("keydown", handleAchievementKeydown);
+legendGallery.addEventListener("keydown", handleAchievementKeydown);
 
 document.querySelector("#closeDialog").addEventListener("click", () => dialog.close());
 dialog.addEventListener("click", (event) => {
@@ -598,7 +662,6 @@ document.addEventListener("click", (event) => {
 });
 document.querySelector("#addGoal").addEventListener("click", () => openGoalDialog());
 document.querySelector("#emptyAdd").addEventListener("click", () => openGoalDialog());
-document.querySelector("#showHistory").addEventListener("click", openHistory);
 document.querySelector("#historyShortcut").addEventListener("click", openHistory);
 document.querySelector("#closeHistory").addEventListener("click", () => historyDialog.close());
 document.querySelector("#clearHistory").addEventListener("click", clearHistory);
@@ -621,8 +684,8 @@ filterButtons.forEach((button) => button.addEventListener("click", () => {
   });
   renderChallenges();
 }));
-document.querySelector("#goldSort").addEventListener("change", renderShowcase);
-document.querySelector("#goldTheme").addEventListener("change", renderShowcase);
+document.querySelector("#legendSort").addEventListener("change", renderShowcase);
+document.querySelector("#legendTheme").addEventListener("change", renderShowcase);
 
 function refreshHabitDay() {
   const today = localDateKey();

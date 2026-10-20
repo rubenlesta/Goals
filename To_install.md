@@ -101,7 +101,7 @@ Después, abre Rumbo desde el icono de la pantalla de inicio o la lista de aplic
 
 - Al abrir Rumbo solicita el PIN `0000`. Hay que introducirlo en cada carga de la página.
 - La app se abre con su propia ventana, sin la barra de direcciones habitual.
-- Puedes navegar entre **Retos** y **Vitrina**; abre el historial desde el icono de reloj en la cabecera o desde **Conseguidos**.
+- Puedes navegar entre **Mis retos** y **Mis logros**; abre el historial desde el icono de reloj en la cabecera o desde **Conseguidos**.
 - Crea un reto de prueba y recarga la aplicación: debe conservarse en ese mismo navegador.
 - Para probar la instalación offline, abre la app online al menos una vez para que el service worker almacene sus recursos principales.
 
